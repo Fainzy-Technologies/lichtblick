@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import HoverableIconButton from "@lichtblick/suite-base/components/HoverableIconButton";
 import { useMessagePipeline } from "@lichtblick/suite-base/components/MessagePipeline";
+import { useStyles } from "@lichtblick/suite-base/components/PlaybackSpeedControls.style";
 import {
   LayoutState,
   useCurrentLayoutActions,
@@ -26,6 +27,7 @@ const configSpeedSelector = (state: LayoutState) =>
   state.selectedLayout?.data?.playbackConfig.speed;
 
 export default function PlaybackSpeedControls(): React.JSX.Element {
+  const { classes } = useStyles();
   const [anchorEl, setAnchorEl] = useState<undefined | HTMLElement>(undefined);
   const open = Boolean(anchorEl);
   const configSpeed = useCurrentLayoutSelector(configSpeedSelector);
@@ -62,22 +64,32 @@ export default function PlaybackSpeedControls(): React.JSX.Element {
   return (
     <>
       <HoverableIconButton
-        disabled={setPlaybackSpeed == undefined}
-        size="small"
-        title="Playback speed"
-        icon={<ArrowDropDownIcon />}
-        activeIcon={<ArrowDropDownIcon />}
+        id="playback-speed-button"
+        aria-controls={open ? "playback-speed-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+        icon={<ArrowDropDownIcon fontSize="small" />}
+        iconPosition="end"
         onClick={handleClick}
         data-testid="PlaybackSpeedControls-Dropdown"
-      />
+        disabled={setPlaybackSpeed == undefined}
+        title="Playback speed"
+        color="inherit"
+      >
+        <span className={classes.speedText}>
+          {displayedSpeed == undefined ? "–" : formatSpeed(displayedSpeed)}
+        </span>
+      </HoverableIconButton>
       <Menu
         id="playback-speed-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
-        MenuListProps={{
-          "aria-labelledby": "playback-speed-button",
-          dense: true,
+        slotProps={{
+          list: {
+            "aria-labelledby": "playback-speed-button",
+            dense: true,
+          },
         }}
         anchorOrigin={{
           vertical: "top",
@@ -105,7 +117,7 @@ export default function PlaybackSpeedControls(): React.JSX.Element {
             <ListItemText
               inset={displayedSpeed !== option}
               primary={formatSpeed(option)}
-              primaryTypographyProps={{ variant: "inherit" }}
+              slotProps={{ primary: { variant: "inherit" } }}
             />
           </MenuItem>
         ))}

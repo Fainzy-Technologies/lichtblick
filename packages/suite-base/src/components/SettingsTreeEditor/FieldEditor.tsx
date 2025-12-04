@@ -59,23 +59,17 @@ function FieldInput({
           value={field.value}
           disabled={field.disabled}
           readOnly={field.readonly}
-          ListboxComponent={MenuList}
-          ListboxProps={{ dense: true } as Partial<MenuListProps>}
-          renderOption={(props, option, { selected }) => {
-            const { key, ...otherProps } = props as {
-              key?: string;
-            } & React.HTMLAttributes<HTMLLIElement>;
-            return (
-              <MenuItem key={key} selected={selected} {...otherProps}>
-                {option}
-              </MenuItem>
-            );
-          }}
-          componentsProps={{
+          renderOption={(props, option, { selected }) => (
+            <MenuItem selected={selected} {...props}>
+              {option}
+            </MenuItem>
+          )}
+          slotProps={{
             clearIndicator: {
               size: "small",
               className: classes.clearIndicator,
             },
+            listbox: { dense: true, component: MenuList } as Partial<MenuListProps>,
           }}
           clearIcon={<CancelIcon fontSize="small" />}
           renderInput={(params) => (
@@ -158,8 +152,10 @@ function FieldInput({
           disabled={field.disabled}
           value={field.value ?? ""}
           placeholder={field.placeholder}
-          InputProps={{
-            readOnly: field.readonly,
+          slotProps={{
+            input: {
+              readOnly: field.readonly,
+            },
           }}
           onChange={(event) => {
             actionHandler({
@@ -249,12 +245,12 @@ function FieldInput({
 
       const isEmpty = field.options.length === 0;
       let selectValue = field.value;
-      if (!selectedOption) {
-        selectValue = INVALID_SENTINEL_VALUE;
-      } else if (selectValue == undefined) {
+      if (selectedOption) {
         // We can't pass value={undefined} or we get a React error "A component is changing an
         // uncontrolled input to be controlled" when changing the value to be non-undefined.
-        selectValue = UNDEFINED_SENTINEL_VALUE;
+        selectValue ??= UNDEFINED_SENTINEL_VALUE;
+      } else {
+        selectValue = INVALID_SENTINEL_VALUE;
       }
 
       const hasError = !selectedOption && (!isEmpty || field.value != undefined);
@@ -364,7 +360,7 @@ function FieldInput({
           onChange={(_, value) => {
             actionHandler({
               action: "update",
-              payload: { path, input: "slider", value: value as number },
+              payload: { path, input: "slider", value },
             });
           }}
         />
