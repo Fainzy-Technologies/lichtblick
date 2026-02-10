@@ -63,11 +63,7 @@ import {
   SUPPORTED_SERVICE_ENCODINGS,
   ZERO_TIME,
 } from "./constants";
-import {
-  checkForHighFrequencyTopics,
-  dataTypeToFullName,
-  statusLevelToAlertSeverity,
-} from "./helpers";
+import { dataTypeToFullName, statusLevelToAlertSeverity } from "./helpers";
 import {
   MessageWriter,
   MessageDefinitionMap,
@@ -180,13 +176,11 @@ export default class FoxgloveWebSocketPlayer implements Player {
       this.#client?.close();
     }, 10000);
 
-    const subprotocols = [FoxgloveClient.SUPPORTED_SUBPROTOCOL, "foxglove.sdk.v1"];
-
     this.#client = new FoxgloveClient({
       ws:
         typeof Worker !== "undefined"
-          ? new WorkerSocketAdapter(this.#url, subprotocols)
-          : new WebSocket(this.#url, subprotocols),
+          ? new WorkerSocketAdapter(this.#url, [FoxgloveClient.SUPPORTED_SUBPROTOCOL])
+          : new WebSocket(this.#url, [FoxgloveClient.SUPPORTED_SUBPROTOCOL]),
     });
 
     this.#client.on("open", () => {
@@ -231,7 +225,7 @@ export default class FoxgloveWebSocketPlayer implements Player {
           message: "Insecure WebSocket connection",
           tip: `Check that the WebSocket server at ${
             this.#url
-          } is reachable and supports protocol version one of: ${subprotocols.join(", ")}.`,
+          } is reachable and supports protocol version ${FoxgloveClient.SUPPORTED_SUBPROTOCOL}.`,
         });
         this.#emitState();
       }
@@ -263,7 +257,7 @@ export default class FoxgloveWebSocketPlayer implements Player {
         message: "Connection failed",
         tip: `Check that the WebSocket server at ${
           this.#url
-        } is reachable and supports protocol version one of: ${subprotocols.join(", ")}.`,
+        } is reachable and supports protocol version ${FoxgloveClient.SUPPORTED_SUBPROTOCOL}.`,
       });
 
       this.#emitState();
@@ -567,14 +561,6 @@ export default class FoxgloveWebSocketPlayer implements Player {
         }
         stats.numMessages++;
         this.#topicsStats = topicStats;
-
-        checkForHighFrequencyTopics({
-          alerts: this.#alerts,
-          endTime: this.#endTime,
-          startTime: this.#startTime,
-          topics: this.#topics,
-          topicStats: this.#topicsStats,
-        });
       } catch (error) {
         this.#alerts.addAlert(`message:${chanInfo.channel.topic}`, {
           severity: "error",
@@ -1350,7 +1336,9 @@ export default class FoxgloveWebSocketPlayer implements Player {
           severity: "error",
         });
       } else {
-        updatedDatatypes ??= new Map(this.#datatypes);
+        if (updatedDatatypes == undefined) {
+          updatedDatatypes = new Map(this.#datatypes);
+        }
         updatedDatatypes.set(name, types);
 
         const fullTypeName = dataTypeToFullName(name);
