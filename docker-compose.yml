@@ -5,6 +5,6 @@ services:
     build: .
     container_name: monitoring_system 
     ports:
-      - "10.13.13.1:8080:8080" 
+      - "100.122.25.186:8080:8080" 
     restart: unless-stopped
 
