@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  webapp:
+    build: .
+    container_name: monitoring_system 
+    ports:
+      - "100.122.25.186:8080:8080" 
+    restart: unless-stopped
+
