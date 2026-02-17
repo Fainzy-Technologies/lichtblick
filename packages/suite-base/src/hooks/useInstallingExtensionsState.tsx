@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2023-2025 Bayerische Motoren Werke Aktiengesellschaft (BMW AG)<lichtblick@bmwgroup.com>
+// SPDX-FileCopyrightText: Copyright (C) 2023-2026 Bayerische Motoren Werke Aktiengesellschaft (BMW AG)<lichtblick@bmwgroup.com>
 // SPDX-License-Identifier: MPL-2.0
 
 import { nanoid } from "nanoid";
@@ -14,6 +14,7 @@ import {
   UseInstallingExtensionsState,
   UseInstallingExtensionsStateProps,
 } from "@lichtblick/suite-base/context/ExtensionCatalogContext";
+import { HttpError } from "@lichtblick/suite-base/services/http/HttpError";
 import { Namespace } from "@lichtblick/suite-base/types";
 
 import { useInstallingExtensionsStore } from "./useInstallingExtensionsStore";
@@ -279,10 +280,18 @@ export function useInstallingExtensionsState({
           inProgress: false,
         }));
 
-        enqueueSnackbar(
-          `An error occurred during extension installation: ${error instanceof Error ? error.message : "Unknown error"}`,
-          { variant: "error" },
-        );
+        let errorMessage: string;
+        if (error instanceof HttpError) {
+          errorMessage = error.getUserFriendlyErrorMessage();
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = "Unknown error";
+        }
+
+        enqueueSnackbar(`An error occurred during extension installation: ${errorMessage}`, {
+          variant: "error",
+        });
       } finally {
         if (isPlayingInitialState) {
           play?.();
